@@ -7,423 +7,169 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            scroll-behavior: smooth;
-            background: #111827; /* Dark background for contrast */
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; background: #111827; }
+        .aurora-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        .aurora-background::before, .aurora-background::after {
+            content: ''; position: absolute; filter: blur(80px); mix-blend-mode: screen; animation: aurora-flow 15s infinite linear; border-radius: 50%;
         }
-
-        /* Aurora Background Animation */
-        .aurora-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-        }
-
-        .aurora-background::before,
-        .aurora-background::after {
-            content: '';
-            position: absolute;
-            filter: blur(80px); /* Increased blur for softer effect */
-            mix-blend-mode: screen; /* Changed blend mode for better effect on dark bg */
-            animation: aurora-flow 15s infinite linear;
-            border-radius: 50%;
-        }
-
-        .aurora-background::before {
-            background: radial-gradient(circle, rgba(99, 102, 241, 0.4), transparent 60%);
-            width: 600px;
-            height: 600px;
-            top: -150px;
-            left: -200px;
-        }
-
-        .aurora-background::after {
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.4), transparent 60%);
-            width: 500px;
-            height: 500px;
-            bottom: -200px;
-            right: -150px;
-            animation-delay: -7.5s;
-        }
-
-        @keyframes aurora-flow {
-            0%, 100% {
-                transform: translateX(20px) translateY(-20px) scale(1);
-            }
-            50% {
-                transform: translateX(-20px) translateY(20px) scale(1.1);
-            }
-        }
-
-        /* Glass Panel Style */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        /* Inner Glass Panel for Cards */
-         .inner-glass-panel {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* Custom Mode Switcher */
-        .mode-btn-glass {
-            transition: all 0.3s ease;
-            color: rgba(255, 255, 255, 0.7);
-            position: relative;
-        }
-        .mode-btn-glass.active {
-            color: white;
-        }
-        .mode-btn-glass.active::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 24px;
-            height: 3px;
-            background: white;
-            border-radius: 2px;
-        }
-        
-        /* Gamification Styles */
-        .progress-bar {
-            background: linear-gradient(90deg, #60a5fa, #3b82f6);
-            transition: width 0.5s ease-in-out;
-        }
-
+        .aurora-background::before { background: radial-gradient(circle, rgba(99,102,241,0.4), transparent 60%); width:600px; height:600px; top:-150px; left:-200px; }
+        .aurora-background::after { background: radial-gradient(circle, rgba(59,130,246,0.4), transparent 60%); width:500px; height:500px; bottom:-200px; right:-150px; animation-delay:-7.5s; }
+        @keyframes aurora-flow { 0%,100%{transform:translateX(20px) translateY(-20px) scale(1);} 50%{transform:translateX(-20px) translateY(20px) scale(1.1);} }
+        .glass-panel { background: rgba(255,255,255,0.1); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border:1px solid rgba(255,255,255,0.2); }
+        .inner-glass-panel { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); }
+        .mode-btn-glass { transition: all .3s; color: rgba(255,255,255,0.7); position: relative; }
+        .mode-btn-glass.active { color: white; }
+        .mode-btn-glass.active::after { content:''; position:absolute; bottom:-8px; left:50%; transform:translateX(-50%); width:24px; height:3px; background:white; border-radius:2px; }
+        .progress-bar { background: linear-gradient(90deg,#60a5fa,#3b82f6); transition: width .5s ease-in-out; }
+        .math-block { display: inline-block; width: 20px; height:20px; margin:2px; }
+        .block-container { display:flex; flex-wrap:wrap; justify-center; }
     </style>
 </head>
 <body class="text-gray-200 flex items-center justify-center min-h-screen p-4">
     <div class="aurora-background"></div>
     <div class="w-full max-w-4xl mx-auto">
         <div class="glass-panel shadow-2xl rounded-3xl overflow-hidden">
-            
-            <header class="p-4 sm:p-6">
-                 <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <header class="p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
                     <div class="text-center sm:text-left">
-                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white">AI Learning Assistant</h1>
+                        <h1 class="text-4xl font-bold text-white">AI Learning Assistant</h1>
                         <p id="header-subtitle" class="mt-2 text-sm text-blue-200">Say a math problem with an answer...</p>
                     </div>
                     <div id="gamification-display" class="w-full sm:w-1/3 text-right">
                         <div class="flex items-center justify-end space-x-3">
-                            <span id="level-display" class="font-bold text-base sm:text-lg bg-white/20 text-white px-3 py-1 rounded-full">Level 1</span>
-                            <span id="xp-display" class="font-semibold text-xs sm:text-sm">0 / 100 XP</span>
+                            <span id="level-display" class="font-bold text-lg bg-white/20 text-white px-3 py-1 rounded-full">Level 1</span>
+                            <span id="xp-display" class="font-semibold text-sm">0 / 100 XP</span>
                         </div>
                         <div class="w-full bg-white/10 rounded-full h-2.5 mt-2">
-                            <div id="xp-progress-bar" class="progress-bar h-2.5 rounded-full" style="width: 0%;"></div>
+                            <div id="xp-progress-bar" class="progress-bar h-2.5 rounded-full" style="width:0%"></div>
                         </div>
                     </div>
                 </div>
             </header>
-
-            <main class="p-4 sm:p-6">
-                 <div class="flex justify-center mb-6 sm:mb-8 space-x-4 sm:space-x-8 border-b border-white/10 pb-4">
-                    <button id="literacy-mode-btn" class="mode-btn-glass font-semibold py-2 px-3 sm:px-6 text-sm sm:text-base">Literacy</button>
-                    <button id="math-mode-btn" class="mode-btn-glass font-semibold py-2 px-3 sm:px-6 text-sm sm:text-base">Math</button>
+            <main class="p-6">
+                <div class="flex justify-center mb-8 space-x-4 border-b border-white/10 pb-4">
+                    <button id="literacy-mode-btn" class="mode-btn-glass font-semibold py-2 px-6 text-base">Literacy</button>
+                    <button id="math-mode-btn" class="mode-btn-glass active font-semibold py-2 px-6 text-base">Math</button>
                 </div>
-                
-                <div class="flex flex-col items-center justify-center mb-6">
-                    <button id="recordBtn" class="w-20 h-20 sm:w-24 sm:h-24 bg-white/20 text-white font-bold text-lg rounded-full shadow-lg border border-white/20 backdrop-blur-sm hover:bg-white/30 focus:outline-none focus:ring-4 focus:ring-white/50 transition-all duration-300 transform hover:scale-105">
-                        <svg id="mic-icon" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8h-1a6 6 0 11-12 0H3a7.001 7.001 0 006 6.93V17H7v1h6v-1h-2v-2.07z" clip-rule="evenodd" /></svg>
-                        <span id="recordBtnText" class="text-xs sm:text-sm font-medium">Listen</span>
+                <div class="flex flex-col items-center mb-8">
+                    <button id="recordBtn" class="w-24 h-24 bg-white/20 text-white font-bold rounded-full shadow-lg border border-white/20 hover:bg-white/30 focus:outline-none transition transform hover:scale-105">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8h-1a6 6 0 11-12 0H3a7.001 7.001 0 006 6.93V17H7v1h6v-1h-2v-2.07z" clip-rule="evenodd" /></svg>
                     </button>
-                    <div id="status" class="mt-4 text-gray-400 text-sm">Status: Idle</div>
+                    <div id="status" class="mt-4 text-gray-400">Status: Idle</div>
                 </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="inner-glass-panel p-4 sm:p-6 rounded-2xl">
-                        <h2 class="text-lg sm:text-xl font-semibold text-white mb-4">Your Spoken Text</h2>
-                        <div id="transcription" class="min-h-[150px] sm:min-h-[200px] text-base sm:text-lg leading-relaxed text-gray-200 p-4 bg-black/10 rounded-lg">
-                            <span class="text-gray-400">Your transcribed text will appear here...</span>
-                        </div>
+                    <div class="inner-glass-panel p-6 rounded-2xl">
+                        <h2 class="text-xl font-semibold text-white mb-4">Your Spoken Text</h2>
+                        <div id="transcription" class="min-h-[200px] p-4 bg-black/10 rounded-lg text-gray-200">Your transcribed text will appear here...</div>
                     </div>
-                    
-                    <div class="inner-glass-panel p-4 sm:p-6 rounded-2xl">
-                        <h2 class="text-lg sm:text-xl font-semibold text-white mb-4">AI Analysis & Feedback</h2>
-                        <div id="analysis" class="min-h-[150px] sm:min-h-[200px] text-base sm:text-lg leading-relaxed text-gray-200 p-4 bg-black/10 rounded-lg">
-                           <span id="analysis-placeholder" class="text-gray-400">Potential errors and suggestions will appear here.</span>
-                        </div>
+                    <div class="inner-glass-panel p-6 rounded-2xl">
+                        <h2 class="text-xl font-semibold text-white mb-4">AI Analysis & Feedback</h2>
+                        <div id="analysis" class="min-h-[200px] p-4 bg-black/10 rounded-lg text-gray-200">Potential errors and suggestions will appear here.</div>
                     </div>
                 </div>
-
-                <div id="guidance-section" class="mt-8 pt-6 border-t border-white/10"></div>
+                <div id="guidance-section" class="mt-8 pt-6 border-t border-white/10 text-center text-gray-400">Try saying "two plus three equals five".</div>
             </main>
-
         </div>
     </div>
 
     <script>
-        // --- App State & Setup ---
-        let currentMode = 'literacy';
-        let isRecording = false;
-        let finalTranscript = '';
-        let userLevel = 1;
-        let userXP = 0;
+        // State
+        let currentMode = 'math', isRecording = false, finalTranscript = '', userLevel = 1, userXP = 0;
         const xpForLevelUp = 100;
-
+        // UI refs
         const recordBtn = document.getElementById('recordBtn');
-        const recordBtnText = document.getElementById('recordBtnText');
-        const micIcon = document.getElementById('mic-icon');
         const statusDiv = document.getElementById('status');
         const transcriptionDiv = document.getElementById('transcription');
         const analysisDiv = document.getElementById('analysis');
-        const literacyModeBtn = document.getElementById('literacy-mode-btn');
-        const mathModeBtn = document.getElementById('math-mode-btn');
-        const guidanceSection = document.getElementById('guidance-section');
+        const literacyBtn = document.getElementById('literacy-mode-btn');
+        const mathBtn = document.getElementById('math-mode-btn');
         const headerSubtitle = document.getElementById('header-subtitle');
+        const guidanceSection = document.getElementById('guidance-section');
         const levelDisplay = document.getElementById('level-display');
         const xpDisplay = document.getElementById('xp-display');
-        const xpProgressBar = document.getElementById('xp-progress-bar');
-        const gamificationDisplay = document.getElementById('gamification-display');
+        const xpBar = document.getElementById('xp-progress-bar');
 
+        // Speech
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const synthesis = window.speechSynthesis;
         let recognition;
 
-        const literacyErrorDictionary = { 'their': { suggestion: 'Did you mean "there" or "they\'re"?' }, 'there': { suggestion: 'Did you mean "their" or "they\'re"?' }, 'your': { suggestion: 'Did you mean "you\'re"?' }, 'to': { suggestion: 'Did you mean "too" or "two"?' }, 'its': { suggestion: 'Did you mean "it\'s"?' }, 'were': { suggestion: 'Did you mean "we\'re" or "where"?' }, 'teh': { suggestion: 'Did you mean "the"?' }};
-        const wordToNumber = { 'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'plus': '+', 'minus': '-', 'times': '*', 'x': '*', 'divided by': '/', 'equals': '=' };
+        const wordMap = { 'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,'plus':'+','minus':'-','times':'*','x':'*','divided by':'/','equals':'=' };
 
-        // --- Core Functions ---
-        
         function initialize() {
-            if (SpeechRecognition) {
-                setupSpeechRecognition();
-                recordBtn.addEventListener('click', toggleRecording);
-                literacyModeBtn.addEventListener('click', () => setMode('literacy'));
-                mathModeBtn.addEventListener('click', () => setMode('math'));
-                setMode('math'); // Default to Math mode
-            } else {
-                handleUnsupportedBrowser();
-            }
+            if (!SpeechRecognition) return statusDiv.textContent='Your browser does not support Speech Recognition.';
+            recognition = new SpeechRecognition(); recognition.continuous=true; recognition.interimResults=true; recognition.lang='en-US';
+            recognition.onstart = () => { isRecording=true; statusDiv.textContent='Status: Listening...'; transcriptionDiv.textContent=''; analysisDiv.textContent='Waiting for you to finish...'; };
+            recognition.onend = () => { isRecording=false; statusDiv.textContent='Status: Idle'; if(finalTranscript) processText(finalTranscript); };
+            recognition.onerror = e => statusDiv.textContent=`Error: ${e.error}`;
+            recognition.onresult = e => {
+                let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ if(e.results[i].isFinal) finalTranscript+=e.results[i][0].transcript; else interim+=e.results[i][0].transcript; }
+                transcriptionDiv.innerHTML = finalTranscript + `<span class="text-gray-500">${interim}</span>`;
+            };
+            recordBtn.onclick = () => isRecording? recognition.stop(): (finalTranscript='', recognition.start());
+            literacyBtn.onclick = () => setMode('literacy'); mathBtn.onclick = () => setMode('math');
+            setMode('math');
         }
 
-        function setupSpeechRecognition() {
-            recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
-            recognition.onstart = () => handleRecordingStart();
-            recognition.onend = () => handleRecordingEnd();
-            recognition.onresult = (e) => handleRecognitionResult(e);
-            recognition.onerror = (e) => statusDiv.textContent = `Error: ${e.error}`;
-        }
-        
         function setMode(mode) {
-            currentMode = mode;
-            literacyModeBtn.classList.toggle('active', mode === 'literacy');
-            mathModeBtn.classList.toggle('active', mode === 'math');
-            gamificationDisplay.style.visibility = (mode === 'math') ? 'visible' : 'hidden';
-            
-            if (mode === 'literacy') {
-                headerSubtitle.textContent = "Say a sentence and I'll check for common spelling errors.";
-                guidanceSection.innerHTML = `<h3 class="text-xl font-semibold mb-3 text-center text-white">Literacy Mode Tips</h3><p class="text-center text-gray-400">Try saying sentences with words that sound alike, such as "Their car is over there."</p>`;
+            currentMode=mode;
+            literacyBtn.classList.toggle('active', mode==='literacy');
+            mathBtn.classList.toggle('active', mode==='math');
+            if(mode==='math'){
+                headerSubtitle.textContent="Say a math problem like 'two plus three equals five'.";
+                guidanceSection.textContent="Try saying 'two plus three equals five'.";
             } else {
-                headerSubtitle.textContent = "Say a math problem with an answer, like 'two plus three equals five'.";
-                guidanceSection.innerHTML = `
-                    <div class="text-center">
-                        <h3 class="text-xl font-semibold mb-3 text-white">Math Mode Features</h3>
-                        <p class="text-gray-400 mb-4">This mode includes a visualizer for simple addition and a gamified scoring system. Try saying "two plus three equals five".</p>
-                    </div>`;
+                headerSubtitle.textContent="Say a sentence and I'll check for common errors.";
+                guidanceSection.textContent="Try saying 'Their car is over there.'";
             }
         }
 
-        function toggleRecording() {
-            if (isRecording) recognition.stop();
-            else recognition.start();
-        }
-
-        function handleRecordingStart() {
-            isRecording = true;
-            recordBtn.classList.add('bg-red-500/50');
-            recordBtnText.textContent = "Stop";
-            statusDiv.textContent = 'Status: Listening...';
-            finalTranscript = '';
-            transcriptionDiv.innerHTML = '<span class="text-gray-400">Listening...</span>';
-            analysisDiv.innerHTML = `<span class="text-gray-400">Waiting for you to finish...</span>`;
-        }
-
-        function handleRecordingEnd() {
-            isRecording = false;
-            recordBtn.classList.remove('bg-red-500/50');
-            recordBtnText.textContent = "Listen";
-            statusDiv.textContent = 'Status: Idle';
-            if (finalTranscript) analyzeAndDisplay(finalTranscript);
-        }
-        
-        function handleRecognitionResult(event) {
-            let interim = '', tempFinal = '';
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) tempFinal += event.results[i][0].transcript;
-                else interim += event.results[i][0].transcript;
-            }
-            finalTranscript += tempFinal;
-            transcriptionDiv.innerHTML = finalTranscript + `<span class="text-gray-500">${interim}</span>`;
-        }
-        
-        function analyzeAndDisplay(text) {
+        function processText(text) {
             transcriptionDiv.textContent = text;
-            const analysisResult = (currentMode === 'literacy') ? analyzeLiteracy(text) : analyzeMath(text);
-            analysisDiv.innerHTML = analysisResult.html;
-            speakText(analysisResult.feedback);
-        }
-        
-        function addXP(amount) {
-            userXP += amount;
-            if (userXP >= xpForLevelUp) {
-                userLevel++;
-                userXP -= xpForLevelUp;
-                speakText(`Level up! You are now level ${userLevel}!`);
-            }
-            updateGamificationUI();
-        }
-
-        function updateGamificationUI() {
-            levelDisplay.textContent = `Level ${userLevel}`;
-            xpDisplay.textContent = `${userXP} / ${xpForLevelUp} XP`;
-            const progressPercentage = (userXP / xpForLevelUp) * 100;
-            xpProgressBar.style.width = `${progressPercentage}%`;
-        }
-
-        function analyzeLiteracy(text) {
-            let html = '', errorCount = 0;
-            text.split(/\s+/).forEach(word => {
-                const cleanWord = word.toLowerCase().replace(/[.,!?]/g, '');
-                if (literacyErrorDictionary[cleanWord]) {
-                    errorCount++;
-                    const { suggestion } = literacyErrorDictionary[cleanWord];
-                    html += `<span class="error-highlight" style="background-color: rgba(239, 68, 68, 0.2); color: #fecaca;">${word}<span class="tooltip">${suggestion}</span></span> `;
-                } else {
-                    html += `${word} `;
-                }
-            });
-            const feedback = errorCount > 0
-                ? `I found ${errorCount} potential areas to review.`
-                : "Great job, no common errors found!";
-            return { html: html.trim(), feedback };
+            if(currentMode==='math') analyzeMath(text);
+            else analyzeLiteracy(text);
         }
 
         function analyzeMath(text) {
-            let processedText = text.toLowerCase();
-            // This part remains the same
-            Object.keys(wordToNumber).forEach(word => {
-                processedText = processedText.replace(new RegExp(`\\b${word}\\b`, 'g'), wordToNumber[word]);
+            let expr = text.toLowerCase();
+            Object.keys(wordMap).forEach(w=> expr = expr.replace(new RegExp(`\\b${w}\\b`,'g'), wordMap[w]));
+            if(!expr.includes('=')) return analysisDiv.textContent="I didn't catch an = sign. Please include your answer.";
+            const [left,right] = expr.split('=').map(s=>s.trim());
+            const match = left.match(/(\d+)([+\-*/])(\d+)/);
+            if(!match) return analysisDiv.textContent="Please say problems like '2 plus 3 equals 5'.";
+            const n1=+match[1], op=match[2], n2=+match[3];
+            let correct;
+            switch(op){ case '+': correct=n1+n2; break; case '-': correct=n1-n2; break; case '*': correct=n1*n2; break; case '/': correct=n2? n1/n2 : NaN; break; }
+            const userAns = parseFloat(right);
+            if(isNaN(correct) || isNaN(userAns)) return analysisDiv.textContent="Couldn't parse numbers properly.";
+            if(Math.abs(userAns-correct)<0.01){ updateXP(25); analysisDiv.innerHTML = `✔️ ${n1} ${op} ${n2} = ${correct}. +25 XP`; speak(`Correct! You earned 25 XP.`); }
+            else { updateXP(-10); analysisDiv.innerHTML = `❌ ${n1} ${op} ${n2} = ${userAns}. Correct is ${correct}. -10 XP`; speak(`Not quite. The correct answer is ${correct}.`); }
+        }
+
+        function analyzeLiteracy(text) {
+            // simplified error check
+            const errors = {'their':'Did you mean there or they\'re?','there':'Did you mean their?'};
+            let count=0, html='';
+            text.split(/\s+/).forEach(word=>{
+                const w=word.toLowerCase().replace(/[.,!?]/g,'');
+                if(errors[w]){ count++; html+=`<span style='background:rgba(239,68,68,0.2)'>${word}<span class='tooltip'>${errors[w]}</span></span> `; }
+                else html+=word+' ';
             });
-
-            if (!processedText.includes('=')) {
-                return { html: text, feedback: "I'm listening for a full equation with an answer." };
-            }
-
-            const [expression, userAnswerStr] = processedText.split('=').map(s => s.trim());
-            
-            // --- Start of rewritten logic ---
-            try {
-                // We will no longer use safeEval. Instead, we parse the expression.
-                const parts = expression.split(' ').filter(part => part !== ''); // Split by space and remove empty strings
-
-                if (parts.length !== 3) {
-                    throw new Error("Expression is not in the format 'number operator number'");
-                }
-
-                const n1 = parseFloat(parts[0]);
-                const operator = parts[1];
-                const n2 = parseFloat(parts[2]);
-
-                if (isNaN(n1) || isNaN(n2)) {
-                    throw new Error("Could not understand the numbers in the problem.");
-                }
-
-                let correctAnswer;
-                switch (operator) {
-                    case '+':
-                        correctAnswer = n1 + n2;
-                        break;
-                    case '-':
-                        correctAnswer = n1 - n2;
-                        break;
-                    case '*':
-                        correctAnswer = n1 * n2;
-                        break;
-                    case '/':
-                        if (n2 === 0) {
-                            return { html: "You can't divide by zero!", feedback: "You can't divide by zero." };
-                        }
-                        correctAnswer = n1 / n2;
-                        break;
-                    default:
-                        throw new Error(`Unknown operator: ${operator}`);
-                }
-
-                const userAnswer = parseFloat(userAnswerStr);
-
-                if (isNaN(userAnswer)) {
-                     return { html: `Could not understand the answer part of "${text}".`, feedback: "I understood the problem, but not the answer you gave." };
-                }
-
-                if (Math.abs(userAnswer - correctAnswer) < 0.01) {
-                    addXP(25);
-                    let visualizerHTML = createMathVisualizer(expression);
-                    const html = `<div><div class="math-step" style="background-color: rgba(74, 222, 128, 0.2); border-left: 4px solid #4ade80;">✔️ ${expression} = ${correctAnswer}</div><p class="mt-2 text-green-300 font-semibold">That's correct! +25 XP</p>${visualizerHTML}</div>`;
-                    return { html, feedback: "Excellent, that's correct! You earned 25 experience points." };
-                } else {
-                    userXP = Math.max(0, userXP - 10);
-                    updateGamificationUI();
-                    
-                     const html = `<div><div class="math-step" style="background-color: rgba(239, 68, 68, 0.2); border-left: 4px solid #f87171;">❌ ${expression} = ${userAnswer}</div><div class="math-step" style="background-color: rgba(74, 222, 128, 0.2); border-left: 4px solid #4ade80;">Correct Answer: <strong>${correctAnswer}</strong></div><p class="mt-2 text-red-400 font-semibold">-10 XP</p></div>`;
-                     return { html, feedback: `Not quite. The correct answer is ${correctAnswer}. Ten experience points were deducted.` };
-                }
-            } catch (e) {
-                console.error("Math analysis error:", e.message);
-                return { html: `I couldn't understand the expression "${expression}". Please say it clearly like "2 plus 3 equals 5".`, feedback: "I had trouble understanding that math problem. Please try again." };
-            }
-            // --- End of rewritten logic ---
+            analysisDiv.innerHTML = html;
+            speak(count?`Found ${count} potential error(s).`:'Great job!');
         }
 
-        function createMathVisualizer(expression) {
-            const addRegex = /(\d+)\s*\+\s*(\d+)/;
-            const match = expression.match(addRegex);
-            if (!match || match.length < 3) return '';
-
-            const n1 = parseInt(match[1]);
-            const n2 = parseInt(match[2]);
-
-            let blocks1 = '', blocks2 = '';
-            for (let i = 0; i < n1; i++) blocks1 += `<div class="math-block bg-blue-400"></div>`;
-            for (let i = 0; i < n2; i++) blocks2 += `<div class="math-block bg-green-400"></div>`;
-            
-            return `
-                <div class="mt-4">
-                    <h4 class="font-semibold text-sm mb-2 text-white">Visualizer</h4>
-                    <div class="p-3 bg-black/20 rounded-lg">
-                        <div class="block-container">${blocks1}</div>
-                        <div class="font-bold text-center text-xl my-1">+</div>
-                        <div class="block-container">${blocks2}</div>
-                    </div>
-                </div>`;
-        }
-        
-        function speakText(text) {
-            // Wait for any previous speech to finish
-            if (synthesis.speaking) {
-                setTimeout(() => speakText(text), 200);
-                return;
-            }
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.onerror = (e) => console.error("Speech Synthesis Error:", e);
-            synthesis.speak(utterance);
+        function updateXP(delta) {
+            userXP = Math.max(0, userXP+delta);
+            if(userXP>=xpForLevelUp){ userLevel++; userXP-=xpForLevelUp; speak(`Level up! You're now level ${userLevel}.`); }
+            levelDisplay.textContent=`Level ${userLevel}`;
+            xpDisplay.textContent=`${userXP} / ${xpForLevelUp} XP`;
+            xpBar.style.width = `${(userXP/xpForLevelUp)*100}%`;
         }
 
-        function handleUnsupportedBrowser() {
-            recordBtn.disabled = true;
-            statusDiv.textContent = "Your browser does not support Speech Recognition. Please try Chrome.";
+        function speak(msg) {
+            if(synthesis.speaking) return setTimeout(()=>speak(msg),200);
+            const u=new SpeechSynthesisUtterance(msg); synthesis.speak(u);
         }
 
         initialize();
