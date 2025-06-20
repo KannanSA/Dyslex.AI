@@ -313,6 +313,7 @@
 
         function analyzeMath(text) {
             let processedText = text.toLowerCase();
+            // This part remains the same
             Object.keys(wordToNumber).forEach(word => {
                 processedText = processedText.replace(new RegExp(`\\b${word}\\b`, 'g'), wordToNumber[word]);
             });
@@ -323,9 +324,44 @@
 
             const [expression, userAnswerStr] = processedText.split('=').map(s => s.trim());
             
+            // --- Start of rewritten logic ---
             try {
-                const safeEval = (expr) => new Function('return ' + expr.replace(/[^0-9\+\-\*\/ \.]/g, ''))();
-                const correctAnswer = safeEval(expression);
+                // We will no longer use safeEval. Instead, we parse the expression.
+                const parts = expression.split(' ').filter(part => part !== ''); // Split by space and remove empty strings
+
+                if (parts.length !== 3) {
+                    throw new Error("Expression is not in the format 'number operator number'");
+                }
+
+                const n1 = parseFloat(parts[0]);
+                const operator = parts[1];
+                const n2 = parseFloat(parts[2]);
+
+                if (isNaN(n1) || isNaN(n2)) {
+                    throw new Error("Could not understand the numbers in the problem.");
+                }
+
+                let correctAnswer;
+                switch (operator) {
+                    case '+':
+                        correctAnswer = n1 + n2;
+                        break;
+                    case '-':
+                        correctAnswer = n1 - n2;
+                        break;
+                    case '*':
+                        correctAnswer = n1 * n2;
+                        break;
+                    case '/':
+                        if (n2 === 0) {
+                            return { html: "You can't divide by zero!", feedback: "You can't divide by zero." };
+                        }
+                        correctAnswer = n1 / n2;
+                        break;
+                    default:
+                        throw new Error(`Unknown operator: ${operator}`);
+                }
+
                 const userAnswer = parseFloat(userAnswerStr);
 
                 if (isNaN(userAnswer)) {
@@ -345,8 +381,10 @@
                      return { html, feedback: `Not quite. The correct answer is ${correctAnswer}. Ten experience points were deducted.` };
                 }
             } catch (e) {
-                return { html: `I couldn't understand the expression "${expression}".`, feedback: "I had trouble understanding that math problem." };
+                console.error("Math analysis error:", e.message);
+                return { html: `I couldn't understand the expression "${expression}". Please say it clearly like "2 plus 3 equals 5".`, feedback: "I had trouble understanding that math problem. Please try again." };
             }
+            // --- End of rewritten logic ---
         }
 
         function createMathVisualizer(expression) {
