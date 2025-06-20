@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; background: #111827; }
-        .aurora-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        .aurora-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
         .aurora-background::before, .aurora-background::after {
             content: ''; position: absolute; filter: blur(80px); mix-blend-mode: screen; animation: aurora-flow 15s infinite linear; border-radius: 50%;
         }
@@ -19,10 +19,20 @@
         .inner-glass-panel { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); }
         .mode-btn-glass { transition: all .3s; color: rgba(255,255,255,0.7); position: relative; }
         .mode-btn-glass.active { color: white; }
-        .mode-btn-glass.active::after { content:''; position:absolute; bottom:-8px; left:50%; transform:translateX(-50%); width:24px; height:3px; background:white; border-radius:2px; }
+        .mode-btn-glass.active::after { content:''; position:absolute; bottom:-17px; left:50%; transform:translateX(-50%); width:24px; height:3px; background:white; border-radius:2px; }
         .progress-bar { background: linear-gradient(90deg,#60a5fa,#3b82f6); transition: width .5s ease-in-out; }
-        .math-block { display: inline-block; width: 20px; height:20px; margin:2px; }
-        .block-container { display:flex; flex-wrap:wrap; justify-center; }
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #api-key-modal { display: none; }
     </style>
 </head>
 <body class="text-gray-200 flex items-center justify-center min-h-screen p-4">
@@ -35,14 +45,14 @@
                         <h1 class="text-4xl font-bold text-white">AI Learning Assistant</h1>
                         <p id="header-subtitle" class="mt-2 text-sm text-blue-200">Say a math problem with an answer...</p>
                     </div>
-                    <div id="gamification-display" class="w-full sm:w-1/3 text-right">
-                        <div class="flex items-center justify-end space-x-3">
-                            <span id="level-display" class="font-bold text-lg bg-white/20 text-white px-3 py-1 rounded-full">Level 1</span>
-                            <span id="xp-display" class="font-semibold text-sm">0 / 100 XP</span>
+                     <div class="flex items-center gap-4">
+                        <div id="user-info" class="hidden text-right">
+                            <p id="user-name" class="font-semibold text-white"></p>
+                            <button id="sign-out-btn" class="text-xs text-blue-300 hover:underline">Sign Out</button>
                         </div>
-                        <div class="w-full bg-white/10 rounded-full h-2.5 mt-2">
-                            <div id="xp-progress-bar" class="progress-bar h-2.5 rounded-full" style="width:0%"></div>
-                        </div>
+                        <button id="sign-in-btn" class="bg-white/20 hover:bg-white/30 text-white font-bold py-2 px-4 rounded-full transition-colors">
+                            Sign In with Google
+                        </button>
                     </div>
                 </div>
             </header>
@@ -52,32 +62,57 @@
                     <button id="math-mode-btn" class="mode-btn-glass active font-semibold py-2 px-6 text-base">Math</button>
                 </div>
                 <div class="flex flex-col items-center mb-8">
-                    <button id="recordBtn" class="w-24 h-24 bg-white/20 text-white font-bold rounded-full shadow-lg border border-white/20 hover:bg-white/30 focus:outline-none transition transform hover:scale-105">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8h-1a6 6 0 11-12 0H3a7.001 7.001 0 006 6.93V17H7v1h6v-1h-2v-2.07z" clip-rule="evenodd" /></svg>
+                    <button id="recordBtn" class="w-24 h-24 bg-rose-500/80 text-white font-bold rounded-full shadow-lg border border-white/20 hover:bg-rose-500/100 focus:outline-none transition-all transform hover:scale-105 flex items-center justify-center">
+                         <svg id="mic-icon" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8h-1a6 6 0 11-12 0H3a7.001 7.001 0 006 6.93V17H7v1h6v-1h-2v-2.07z" clip-rule="evenodd" /></svg>
+                         <svg id="stop-icon" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 hidden" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1zm4 0a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
                     </button>
                     <div id="status" class="mt-4 text-gray-400">Status: Idle</div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="inner-glass-panel p-6 rounded-2xl">
                         <h2 class="text-xl font-semibold text-white mb-4">Your Spoken Text</h2>
-                        <div id="transcription" class="min-h-[200px] p-4 bg-black/10 rounded-lg text-gray-200">Your transcribed text will appear here...</div>
+                        <div id="transcription" class="min-h-[200px] p-4 bg-black/10 rounded-lg text-gray-200 prose prose-invert">Your transcribed text will appear here...</div>
                     </div>
                     <div class="inner-glass-panel p-6 rounded-2xl">
                         <h2 class="text-xl font-semibold text-white mb-4">AI Analysis & Feedback</h2>
-                        <div id="analysis" class="min-h-[200px] p-4 bg-black/10 rounded-lg text-gray-200">Potential errors and suggestions will appear here.</div>
+                        <div id="analysis" class="min-h-[200px] p-4 bg-black/10 rounded-lg text-gray-200 prose prose-invert">Potential errors and suggestions will appear here.</div>
                     </div>
                 </div>
                 <div id="guidance-section" class="mt-8 pt-6 border-t border-white/10 text-center text-gray-400">Try saying "two plus three equals five".</div>
             </main>
         </div>
     </div>
+    
+    <!-- API Key Modal -->
+    <div id="api-key-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md p-8 rounded-2xl shadow-2xl text-center">
+            <h2 class="text-2xl font-bold text-white mb-4">Enter Your Gemini API Key</h2>
+            <p class="text-gray-300 mb-6">To use the AI Literacy feature, please provide your own Google AI Gemini API key. Your key will be stored securely.</p>
+            <input id="api-key-input" type="password" class="w-full bg-black/20 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Enter your API key here">
+            <div class="mt-6 flex justify-end gap-4">
+                 <button id="save-api-key-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-colors">Save Key</button>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <script>
-        // State
-        let currentMode = 'math', isRecording = false, finalTranscript = '', userLevel = 1, userXP = 0;
-        const xpForLevelUp = 100;
-        // UI refs
+        // --- STATE & CONFIGURATION ---
+        let currentMode = 'math';
+        let isRecording = false;
+        let finalTranscript = '';
+        let userAPIKey = null; // To store user's Gemini API Key
+        
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // --- UI ELEMENT REFERENCES ---
         const recordBtn = document.getElementById('recordBtn');
+        const micIcon = document.getElementById('mic-icon');
+        const stopIcon = document.getElementById('stop-icon');
         const statusDiv = document.getElementById('status');
         const transcriptionDiv = document.getElementById('transcription');
         const analysisDiv = document.getElementById('analysis');
@@ -85,93 +120,336 @@
         const mathBtn = document.getElementById('math-mode-btn');
         const headerSubtitle = document.getElementById('header-subtitle');
         const guidanceSection = document.getElementById('guidance-section');
-        const levelDisplay = document.getElementById('level-display');
-        const xpDisplay = document.getElementById('xp-display');
-        const xpBar = document.getElementById('xp-progress-bar');
+        const signInBtn = document.getElementById('sign-in-btn');
+        const signOutBtn = document.getElementById('sign-out-btn');
+        const userInfoDiv = document.getElementById('user-info');
+        const userNameP = document.getElementById('user-name');
+        const apiKeyModal = document.getElementById('api-key-modal');
+        const apiKeyInput = document.getElementById('api-key-input');
+        const saveApiKeyBtn = document.getElementById('save-api-key-btn');
 
-        // Speech
+        // --- SPEECH RECOGNITION & SYNTHESIS SETUP ---
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const synthesis = window.speechSynthesis;
         let recognition;
 
-        const wordMap = { 'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,'plus':'+','minus':'-','times':'*','x':'*','divided by':'/','equals':'=' };
-
-        function initialize() {
-            if (!SpeechRecognition) return statusDiv.textContent='Your browser does not support Speech Recognition.';
-            recognition = new SpeechRecognition(); recognition.continuous=true; recognition.interimResults=true; recognition.lang='en-US';
-            recognition.onstart = () => { isRecording=true; statusDiv.textContent='Status: Listening...'; transcriptionDiv.textContent=''; analysisDiv.textContent='Waiting for you to finish...'; };
-            recognition.onend = () => { isRecording=false; statusDiv.textContent='Status: Idle'; if(finalTranscript) processText(finalTranscript); };
-            recognition.onerror = e => statusDiv.textContent=`Error: ${e.error}`;
-            recognition.onresult = e => {
-                let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ if(e.results[i].isFinal) finalTranscript+=e.results[i][0].transcript; else interim+=e.results[i][0].transcript; }
-                transcriptionDiv.innerHTML = finalTranscript + `<span class="text-gray-500">${interim}</span>`;
-            };
-            recordBtn.onclick = () => isRecording? recognition.stop(): (finalTranscript='', recognition.start());
-            literacyBtn.onclick = () => setMode('literacy'); mathBtn.onclick = () => setMode('math');
-            setMode('math');
+        // --- FIREBASE INITIALIZATION ---
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch (e) {
+            console.error("Firebase initialization failed:", e);
+            statusDiv.textContent = "Error connecting to services.";
         }
 
-        function setMode(mode) {
-            currentMode=mode;
-            literacyBtn.classList.toggle('active', mode==='literacy');
-            mathBtn.classList.toggle('active', mode==='math');
-            if(mode==='math'){
-                headerSubtitle.textContent="Say a math problem like 'two plus three equals five'.";
-                guidanceSection.textContent="Try saying 'two plus three equals five'.";
-            } else {
-                headerSubtitle.textContent="Say a sentence and I'll check for common errors.";
-                guidanceSection.textContent="Try saying 'Their car is over there.'";
+        // --- AUTHENTICATION LOGIC ---
+        const provider = new GoogleAuthProvider();
+
+        async function handleSignIn() {
+            try {
+                await signInWithPopup(auth, provider);
+                // onAuthStateChanged will handle the UI updates
+            } catch (error) {
+                console.error("Sign in error:", error);
+                statusDiv.textContent = `Sign in failed: ${error.message}`;
             }
         }
 
-        function processText(text) {
+        async function handleSignOut() {
+            try {
+                await signOut(auth);
+                userAPIKey = null; // Clear key on sign out
+                // onAuthStateChanged will handle the UI updates
+            } catch (error) {
+                console.error("Sign out error:", error);
+            }
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User is signed in
+                userInfoDiv.classList.remove('hidden');
+                userNameP.textContent = user.displayName;
+                signInBtn.classList.add('hidden');
+                
+                // Check for existing API key in Firestore
+                const userKeyDocRef = doc(db, `artifacts/${appId}/users/${user.uid}/keys`, "gemini");
+                const docSnap = await getDoc(userKeyDocRef);
+
+                if (docSnap.exists() && docSnap.data().apiKey) {
+                    userAPIKey = docSnap.data().apiKey;
+                    apiKeyModal.style.display = 'none';
+                } else {
+                    // Prompt user for API key if not found
+                    apiKeyModal.style.display = 'flex';
+                }
+
+            } else {
+                // User is signed out
+                userInfoDiv.classList.add('hidden');
+                signInBtn.classList.remove('hidden');
+                userAPIKey = null;
+                 apiKeyModal.style.display = 'none';
+            }
+        });
+        
+        async function handleSaveApiKey() {
+            const key = apiKeyInput.value.trim();
+            if (!key) {
+                alert("Please enter a valid API key.");
+                return;
+            }
+            
+            const user = auth.currentUser;
+            if (user) {
+                const userKeyDocRef = doc(db, `artifacts/${appId}/users/${user.uid}/keys`, "gemini");
+                try {
+                    await setDoc(userKeyDocRef, { apiKey: key });
+                    userAPIKey = key;
+                    apiKeyInput.value = '';
+                    apiKeyModal.style.display = 'none';
+                    statusDiv.textContent = "API Key saved successfully!";
+                } catch(error) {
+                    console.error("Error saving API key:", error);
+                    statusDiv.textContent = "Failed to save API key.";
+                }
+            }
+        }
+
+
+        // --- CORE INITIALIZATION ---
+        function initialize() {
+            if (!SpeechRecognition) {
+                statusDiv.textContent = 'Your browser does not support the Web Speech API.';
+                recordBtn.disabled = true;
+                return;
+            }
+            
+            setupRecognition();
+            setupUIListeners();
+            setMode('math'); // Set initial mode
+        }
+
+        function setupRecognition() {
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                isRecording = true;
+                finalTranscript = '';
+                statusDiv.textContent = 'Status: Listening...';
+                recordBtn.classList.add('bg-blue-500/80');
+                recordBtn.classList.remove('bg-rose-500/80');
+                micIcon.classList.add('hidden');
+                stopIcon.classList.remove('hidden');
+                transcriptionDiv.innerHTML = '<em>Listening for your voice...</em>';
+                analysisDiv.innerHTML = '<em>Waiting for you to finish speaking...</em>';
+            };
+
+            recognition.onend = () => {
+                isRecording = false;
+                statusDiv.textContent = 'Status: Processing...';
+                recordBtn.classList.remove('bg-blue-500/80');
+                recordBtn.classList.add('bg-rose-500/80');
+                micIcon.classList.remove('hidden');
+                stopIcon.classList.add('hidden');
+                if (finalTranscript) {
+                    processText(finalTranscript);
+                } else {
+                     statusDiv.textContent = 'Status: Idle';
+                     transcriptionDiv.innerHTML = 'Could not hear anything. Please try again.';
+                }
+            };
+
+            recognition.onerror = event => {
+                statusDiv.textContent = `Speech recognition error: ${event.error}`;
+                 if (event.error === 'not-allowed') {
+                    statusDiv.innerHTML += '<br>Please grant microphone permission.';
+                 }
+            };
+
+            recognition.onresult = event => {
+                let interimTranscript = '';
+                finalTranscript = ''; // Reset final transcript to rebuild it
+                for (let i = 0; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+                transcriptionDiv.innerHTML = finalTranscript + `<span class="text-gray-500">${interimTranscript}</span>`;
+            };
+        }
+        
+        function setupUIListeners() {
+            recordBtn.onclick = () => {
+                if (isRecording) {
+                    recognition.stop();
+                } else {
+                    recognition.start();
+                }
+            };
+            literacyBtn.onclick = () => setMode('literacy');
+            mathBtn.onclick = () => setMode('math');
+            signInBtn.onclick = handleSignIn;
+            signOutBtn.onclick = handleSignOut;
+            saveApiKeyBtn.onclick = handleSaveApiKey;
+        }
+
+        // --- MODE SWITCHING LOGIC ---
+        function setMode(mode) {
+            currentMode = mode;
+            literacyBtn.classList.toggle('active', mode === 'literacy');
+            mathBtn.classList.toggle('active', mode === 'math');
+            transcriptionDiv.innerHTML = 'Your transcribed text will appear here...';
+            analysisDiv.innerHTML = 'Potential errors and suggestions will appear here.';
+
+            if (mode === 'math') {
+                headerSubtitle.textContent = "Say a math problem like 'two plus three equals five'.";
+                guidanceSection.textContent = "Try saying 'four times six equals twenty four'.";
+            } else {
+                headerSubtitle.textContent = "Say a sentence and I'll check for common errors.";
+                guidanceSection.textContent = "Try saying 'Their car is over there, they're running late.'";
+            }
+        }
+
+        // --- TEXT PROCESSING ROUTER ---
+        async function processText(text) {
             transcriptionDiv.textContent = text;
-            if(currentMode==='math') analyzeMath(text);
-            else analyzeLiteracy(text);
+            analysisDiv.innerHTML = `<div class="flex items-center"><div class="loader"></div><span>Analyzing...</span></div>`;
+            
+            try {
+                if (currentMode === 'math') {
+                    analyzeMath(text);
+                } else {
+                    await analyzeLiteracyWithAI(text);
+                }
+            } catch (error) {
+                analysisDiv.textContent = `An error occurred during analysis: ${error.message}`;
+                speak('Sorry, something went wrong during the analysis.');
+            } finally {
+                 statusDiv.textContent = 'Status: Idle';
+            }
         }
 
+        // --- MATH ANALYSIS (CLIENT-SIDE) ---
         function analyzeMath(text) {
-            let expr = text.toLowerCase();
-            Object.keys(wordMap).forEach(w=> expr = expr.replace(new RegExp(`\\b${w}\\b`,'g'), wordMap[w]));
-            if(!expr.includes('=')) return analysisDiv.textContent="I didn't catch an = sign. Please include your answer.";
-            const [left,right] = expr.split('=').map(s=>s.trim());
-            const match = left.match(/(\d+)([+\-*/])(\d+)/);
-            if(!match) return analysisDiv.textContent="Please say problems like '2 plus 3 equals 5'.";
-            const n1=+match[1], op=match[2], n2=+match[3];
-            let correct;
-            switch(op){ case '+': correct=n1+n2; break; case '-': correct=n1-n2; break; case '*': correct=n1*n2; break; case '/': correct=n2? n1/n2 : NaN; break; }
-            const userAns = parseFloat(right);
-            if(isNaN(correct) || isNaN(userAns)) return analysisDiv.textContent="Couldn't parse numbers properly.";
-            if(Math.abs(userAns-correct)<0.01){ updateXP(25); analysisDiv.innerHTML = `✔️ ${n1} ${op} ${n2} = ${correct}. +25 XP`; speak(`Correct! You earned 25 XP.`); }
-            else { updateXP(-10); analysisDiv.innerHTML = `❌ ${n1} ${op} ${n2} = ${userAns}. Correct is ${correct}. -10 XP`; speak(`Not quite. The correct answer is ${correct}.`); }
-        }
-
-        function analyzeLiteracy(text) {
-            // simplified error check
-            const errors = {'their':'Did you mean there or they\'re?','there':'Did you mean their?'};
-            let count=0, html='';
-            text.split(/\s+/).forEach(word=>{
-                const w=word.toLowerCase().replace(/[.,!?]/g,'');
-                if(errors[w]){ count++; html+=`<span style='background:rgba(239,68,68,0.2)'>${word}<span class='tooltip'>${errors[w]}</span></span> `; }
-                else html+=word+' ';
+            const wordMap = { 'zero':0, 'one':1, 'two':2, 'three':3, 'four':4, 'five':5, 'six':6, 'seven':7, 'eight':8, 'nine':9, 'ten':10, 'plus':'+', 'minus':'-', 'times':'*', 'x':'*', 'multiplied by': '*', 'divided by':'/', 'equals':'=', 'is': '=' };
+            let expr = text.toLowerCase().trim().replace(/[,?.]/g, '');
+            Object.keys(wordMap).forEach(w => {
+                 expr = expr.replace(new RegExp(`\\b${w}\\b`, 'g'), wordMap[w]);
             });
-            analysisDiv.innerHTML = html;
-            speak(count?`Found ${count} potential error(s).`:'Great job!');
+
+            if (!expr.includes('=')) {
+                analysisDiv.textContent = "I didn't hear an equals sign. Please state the full equation including your answer.";
+                speak("I didn't hear an equals sign. Please try again.");
+                return;
+            }
+
+            const parts = expr.split('=');
+            const leftSide = parts[0].trim();
+            const userAnsStr = parts[1].trim();
+
+            try {
+                const calculatedResult = new Function('return ' + leftSide)();
+                const userAns = parseFloat(userAnsStr);
+
+                if (isNaN(calculatedResult) || isNaN(userAns)) {
+                    analysisDiv.textContent = "I couldn't understand the numbers in your problem. Please try again.";
+                    speak("I couldn't understand the numbers. Please try again.");
+                    return;
+                }
+                
+                if (Math.abs(userAns - calculatedResult) < 0.01) {
+                    analysisDiv.innerHTML = `<p class="text-green-400 font-semibold">✔️ Correct! ${leftSide} = ${calculatedResult}.</p>`;
+                    speak(`Correct!`);
+                } else {
+                    analysisDiv.innerHTML = `<p class="text-red-400 font-semibold">❌ Not quite.</p><p>You said: ${leftSide} = ${userAns}</p><p>The correct answer is: ${leftSide} = ${calculatedResult}.</p>`;
+                    speak(`Not quite. The correct answer is ${calculatedResult}.`);
+                }
+
+            } catch (e) {
+                analysisDiv.textContent = "I had trouble understanding that math problem. Please try stating it clearly, for example '5 times 3 equals 15'.";
+                speak("I had trouble understanding that problem. Please try again.");
+            }
         }
 
-        function updateXP(delta) {
-            userXP = Math.max(0, userXP+delta);
-            if(userXP>=xpForLevelUp){ userLevel++; userXP-=xpForLevelUp; speak(`Level up! You're now level ${userLevel}.`); }
-            levelDisplay.textContent=`Level ${userLevel}`;
-            xpDisplay.textContent=`${userXP} / ${xpForLevelUp} XP`;
-            xpBar.style.width = `${(userXP/xpForLevelUp)*100}%`;
+        // --- LITERACY ANALYSIS (GEMINI API) ---
+        async function analyzeLiteracyWithAI(text) {
+             if (!auth.currentUser) {
+                analysisDiv.innerHTML = `<p>Please sign in with Google to use the AI literacy analysis.</p>`;
+                speak("Please sign in to use this feature.");
+                apiKeyModal.style.display = 'flex'; // Show modal if not signed in
+                return;
+            }
+            if (!userAPIKey) {
+                analysisDiv.innerHTML = `<p>Please enter your Gemini API key to use this feature.</p>`;
+                speak("Please add your API key to use this feature.");
+                apiKeyModal.style.display = 'flex'; // Show modal if no key
+                return;
+            }
+
+            const prompt = `You are an AI literacy assistant for a learning application. Your tone should be encouraging and helpful. Analyze the following text for grammatical errors, spelling mistakes, or incorrect word usage. 
+            
+            Your response MUST be in simple HTML format. 
+            - If there are errors, highlight the incorrect parts with a <mark> tag. 
+            - Follow the highlighted text with a clear and concise explanation in a <ul><li> list.
+            - If the text is correct, provide only a single paragraph of positive reinforcement like "Excellent job! Your grammar and spelling are perfect." without any other HTML.
+
+            Analyze this text: "${text}"`;
+
+            try {
+                let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                const payload = { contents: chatHistory };
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${userAPIKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}. Check your API key and permissions.`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0) {
+                    const feedback = result.candidates[0].content.parts[0].text;
+                    analysisDiv.innerHTML = feedback;
+
+                    const spokenFeedback = analysisDiv.textContent || "Analysis complete. Please check the screen for feedback.";
+                    speak(spokenFeedback);
+                } else {
+                   throw new Error("No content received from AI.");
+                }
+
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                analysisDiv.textContent = `Sorry, I couldn't get feedback from the AI. Error: ${error.message}`;
+                speak("Sorry, I couldn't get feedback right now.");
+            }
         }
 
-        function speak(msg) {
-            if(synthesis.speaking) return setTimeout(()=>speak(msg),200);
-            const u=new SpeechSynthesisUtterance(msg); synthesis.speak(u);
+        // --- AUDIO FEEDBACK ---
+        function speak(message) {
+            if (synthesis.speaking) {
+                synthesis.cancel();
+                setTimeout(() => speak(message), 250);
+                return;
+            }
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.rate = 1.1;
+            synthesis.speak(utterance);
         }
 
+        // --- START THE APPLICATION ---
         initialize();
     </script>
 </body>
