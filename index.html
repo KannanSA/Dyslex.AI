@@ -136,88 +136,103 @@
         // --- FIREBASE INITIALIZATION ---
         let app, auth, db;
         try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-        } catch (e) {
-            console.error("Firebase initialization failed:", e);
-            statusDiv.textContent = "Error connecting to services.";
-        }
-
-        // --- AUTHENTICATION LOGIC ---
-        const provider = new GoogleAuthProvider();
-
-        async function handleSignIn() {
-            try {
-                await signInWithPopup(auth, provider);
-                // onAuthStateChanged will handle the UI updates
-            } catch (error) {
-                console.error("Sign in error:", error);
-                statusDiv.textContent = `Sign in failed: ${error.message}`;
-            }
-        }
-
-        async function handleSignOut() {
-            try {
-                await signOut(auth);
-                userAPIKey = null; // Clear key on sign out
-                // onAuthStateChanged will handle the UI updates
-            } catch (error) {
-                console.error("Sign out error:", error);
-            }
-        }
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // User is signed in
-                userInfoDiv.classList.remove('hidden');
-                userNameP.textContent = user.displayName;
-                signInBtn.classList.add('hidden');
-                
-                // Check for existing API key in Firestore
-                const userKeyDocRef = doc(db, `artifacts/${appId}/users/${user.uid}/keys`, "gemini");
-                const docSnap = await getDoc(userKeyDocRef);
-
-                if (docSnap.exists() && docSnap.data().apiKey) {
-                    userAPIKey = docSnap.data().apiKey;
-                    apiKeyModal.style.display = 'none';
-                } else {
-                    // Prompt user for API key if not found
-                    apiKeyModal.style.display = 'flex';
-                }
-
+            // Check if the firebaseConfig object is not empty and has a valid API key.
+            if (firebaseConfig && Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey) {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
             } else {
-                // User is signed out
-                userInfoDiv.classList.add('hidden');
-                signInBtn.classList.remove('hidden');
-                userAPIKey = null;
-                 apiKeyModal.style.display = 'none';
+                throw new Error("Firebase configuration is missing or invalid.");
             }
-        });
-        
-        async function handleSaveApiKey() {
-            const key = apiKeyInput.value.trim();
-            if (!key) {
-                alert("Please enter a valid API key.");
-                return;
+        } catch (e) {
+            console.error("Firebase initialization failed:", e.message);
+            statusDiv.textContent = "Error connecting to services. AI features disabled.";
+            // Visually disable features that rely on Firebase.
+            signInBtn.style.display = 'none';
+            literacyBtn.disabled = true;
+            literacyBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            literacyBtn.title = "This feature is disabled because service connection failed.";
+        }
+
+        // --- AUTHENTICATION & FIRESTORE LOGIC ---
+        // This entire block only runs if Firebase initialized successfully.
+        if (auth && db) {
+            const provider = new GoogleAuthProvider();
+
+            async function handleSignIn() {
+                try {
+                    await signInWithPopup(auth, provider);
+                } catch (error) {
+                    console.error("Sign in error:", error);
+                    statusDiv.textContent = `Sign in failed: ${error.message}`;
+                }
+            }
+
+            async function handleSignOut() {
+                try {
+                    await signOut(auth);
+                    userAPIKey = null; // Clear key on sign out
+                } catch (error) {
+                    console.error("Sign out error:", error);
+                }
             }
             
-            const user = auth.currentUser;
-            if (user) {
-                const userKeyDocRef = doc(db, `artifacts/${appId}/users/${user.uid}/keys`, "gemini");
-                try {
-                    await setDoc(userKeyDocRef, { apiKey: key });
-                    userAPIKey = key;
-                    apiKeyInput.value = '';
-                    apiKeyModal.style.display = 'none';
-                    statusDiv.textContent = "API Key saved successfully!";
-                } catch(error) {
-                    console.error("Error saving API key:", error);
-                    statusDiv.textContent = "Failed to save API key.";
+            async function handleSaveApiKey() {
+                const key = apiKeyInput.value.trim();
+                if (!key) {
+                    speak("Please enter a valid API key.");
+                    return;
+                }
+                
+                const user = auth.currentUser;
+                if (user) {
+                    const userKeyDocRef = doc(db, `artifacts/${appId}/users/${user.uid}/keys`, "gemini");
+                    try {
+                        await setDoc(userKeyDocRef, { apiKey: key });
+                        userAPIKey = key;
+                        apiKeyInput.value = '';
+                        apiKeyModal.style.display = 'none';
+                        statusDiv.textContent = "API Key saved successfully!";
+                        speak("API Key saved.");
+                    } catch(error) {
+                        console.error("Error saving API key:", error);
+                        statusDiv.textContent = "Failed to save API key.";
+                        speak("Failed to save API key.");
+                    }
                 }
             }
-        }
 
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    // User is signed in
+                    userInfoDiv.classList.remove('hidden');
+                    userNameP.textContent = user.displayName;
+                    signInBtn.classList.add('hidden');
+                    
+                    const userKeyDocRef = doc(db, `artifacts/${appId}/users/${user.uid}/keys`, "gemini");
+                    const docSnap = await getDoc(userKeyDocRef);
+
+                    if (docSnap.exists() && docSnap.data().apiKey) {
+                        userAPIKey = docSnap.data().apiKey;
+                        apiKeyModal.style.display = 'none';
+                    } else {
+                        apiKeyModal.style.display = 'flex';
+                    }
+
+                } else {
+                    // User is signed out
+                    userInfoDiv.classList.add('hidden');
+                    signInBtn.classList.remove('hidden');
+                    userAPIKey = null;
+                    apiKeyModal.style.display = 'none';
+                }
+            });
+            
+            // Attach listeners that depend on auth
+            signInBtn.addEventListener('click', handleSignIn);
+            signOutBtn.addEventListener('click', handleSignOut);
+            saveApiKeyBtn.addEventListener('click', handleSaveApiKey);
+        }
 
         // --- CORE INITIALIZATION ---
         function initialize() {
@@ -256,7 +271,7 @@
                 recordBtn.classList.remove('bg-blue-500/80');
                 recordBtn.classList.add('bg-rose-500/80');
                 micIcon.classList.remove('hidden');
-                stopIcon.classList.add('hidden');
+                stopIcon.add('hidden');
                 if (finalTranscript) {
                     processText(finalTranscript);
                 } else {
@@ -296,13 +311,16 @@
             };
             literacyBtn.onclick = () => setMode('literacy');
             mathBtn.onclick = () => setMode('math');
-            signInBtn.onclick = handleSignIn;
-            signOutBtn.onclick = handleSignOut;
-            saveApiKeyBtn.onclick = handleSaveApiKey;
+            // Auth-related listeners are now set up conditionally after Firebase initialization.
         }
 
         // --- MODE SWITCHING LOGIC ---
         function setMode(mode) {
+            // Do not switch to literacy mode if it's disabled
+            if (mode === 'literacy' && literacyBtn.disabled) {
+                speak("The literacy feature is currently unavailable.");
+                return;
+            }
             currentMode = mode;
             literacyBtn.classList.toggle('active', mode === 'literacy');
             mathBtn.classList.toggle('active', mode === 'math');
@@ -381,10 +399,9 @@
 
         // --- LITERACY ANALYSIS (GEMINI API) ---
         async function analyzeLiteracyWithAI(text) {
-             if (!auth.currentUser) {
+             if (!auth || !auth.currentUser) {
                 analysisDiv.innerHTML = `<p>Please sign in with Google to use the AI literacy analysis.</p>`;
                 speak("Please sign in to use this feature.");
-                apiKeyModal.style.display = 'flex'; // Show modal if not signed in
                 return;
             }
             if (!userAPIKey) {
